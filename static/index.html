@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Credentials for the VAST Annotation Usability Evaluation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  </head>
+  <body>
+    <div class="container-fluid container-sm">
+      <h1>Credentials for the VAST Annotation Usability Evaluation</h1>
+      <div>
+        <p>Please proceed only if you have informed yourself about the study, read the <a href="VAST-Instructions.pdf">instructions</a> and signed the <a href="VAST-ConsentForm.pdf">participant consent form</a>.</p>
+      </div>
+      <form>
+        <div class="row">
+          <label for="email" class="form-label">Your e-mail:</label>
+          <input type="email" class="form-control has-validation" id="email" aria-describedby="emailHelp">
+          <div id="emailHelp" class="form-text">We will send you the credentials and not store your e-mail.</div>
+          <div id="email-invalid" class="invalid-feedback">Please provide a valid mail. You will not receive your credentials if your mail is not valid.</div>
+          <label>Select your focus area:</label>
+          <div class="form-check" id="pilotGroup">
+            <input class="display-d" type="radio" name="pilotRadio" required style="visibility: hidden;">
+            <div class="invalid-feedback">Please pick one pilot.</div>
+          </div>
+
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary" onclick="users()" id="pick">Pick User</button>
+            <button type="button" class="btn btn-secondary" onclick="lucky()" id="get">Get Random</button>
+          </div>
+        </div>
+
+        <div class="row" style="visibility: hidden;" id="userSelection">
+          <label>Select your user:</label>
+          <div class="form-check" id="userGroup">
+          </div>
+
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary" onclick="register()" id="enroll">Request Credentials</button>
+          </div>
+        </div>
+
+        <div class="row" style="visibility: hidden;" id="userData">
+          <div class="mb-3">
+            <label for="user" class="form-label">Username</label>
+            <input type="email" class="form-control" id="user" aria-describedby="credHelp">
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="text" class="form-control" id="password" aria-describedby="credHelp">
+            <div id="credHelp" class="form-text">Check that you've received a mail with these credentials.</div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <template id="pilotTempl">
+      <div>
+        <input class="form-check-input" type="radio" name="pilotRadio" id="pilotradio" required>
+        <label class="form-check-label" for="pilotradio" id="pilotlabel">
+          Pilot X: Desc
+        </label>
+      </div>
+    </template>
+
+    <template id="userTempl">
+      <div>
+        <input class="form-check-input" type="radio" name="userRadio" id="userradio">
+        <label class="form-check-label" for="userradio" id="userlabel">
+          User
+        </label>
+      </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script>
+var d = document;
+
+async function groups() {
+  email.classList.add("was-validated");
+  let response = await fetch('/group');
+
+  if (response.status === 200) {
+    let data = await response.json();
+    data.result.forEach(elt => {
+      let templ = d.querySelector("#pilotTempl");
+      let clone = templ.content.cloneNode(true);
+      let cloneInput = clone.querySelector("#pilotradio")
+      cloneInput.setAttribute("id", "pilot" + elt.id + "radio");
+      cloneInput.setAttribute("value", elt.id);
+      let cloneLabel = clone.querySelector("#pilotlabel");
+      cloneLabel.setAttribute("id", "pilot" + elt.id + "label");
+      cloneLabel.setAttribute("for", "pilot" + elt.id + "radio");
+      cloneLabel.textContent = "Pilot " + elt.id + ": " + elt.desc;
+      d.querySelector("#pilotGroup").appendChild(clone)        
+    });
+  }
+}
+
+async function users() {
+  let email = d.querySelector("#email");
+  if (!email.value) {
+    email.classList.add("is-invalid");
+    return;
+  }
+  var pilotSelection = d.querySelector("input[name ='pilotRadio']:checked");
+  if (!pilotSelection) {
+    pilotSelection = d.querySelector("input[name ='pilotRadio']");
+    pilotSelection.classList.add("is-invalid");
+    return;
+  }
+  pilotSelection.classList.add("was-validated");
+  let response = await fetch('/group/' + pilotSelection.value, {
+    method: 'POST',
+    body: JSON.stringify({"text": email.value})
+  });
+
+  if (response.status === 200) {
+    let data = await response.json();
+
+    data.result.forEach(elt => {
+      var templ = d.querySelector("#userTempl");
+      var clone = templ.content.cloneNode(true);
+      let cloneInput = clone.querySelector("#userradio")
+      cloneInput.setAttribute("id", "user" + elt.id + "radio");
+      cloneInput.setAttribute("value", elt.id);
+      if (!elt.available)
+        cloneInput.setAttribute("disabled", "disabled");
+      let cloneLabel = clone.querySelector("#userlabel");
+      cloneLabel.setAttribute("id", "user" + elt.id + "label");
+      cloneLabel.setAttribute("for", "user" + elt.id + "radio");
+      cloneLabel.textContent = elt.name;
+      d.querySelector("#userGroup").appendChild(clone)        
+    });
+    var choices = d.querySelectorAll("input[name ='userRadio']:not(:disabled)");
+    if (choices && choices.length === 1) {
+      choices[0].setAttribute("checked", "checked");
+      register()
+    }
+    d.querySelector("#userSelection").style.visibility = "visible";
+    d.querySelector("#pick").disabled = "disabled";
+    d.querySelector("#get").disabled = "disabled";      
+}
+}
+
+async function register() {
+  let email = d.querySelector("#email");
+  if (!email.value) {
+    email.classList.add("is-invalid");
+    return;
+  }
+  let pilotSelection = d.querySelector("input[name ='pilotRadio']:checked").value
+  let userSelection = d.querySelector("input[name ='userRadio']:checked").value
+  let response = await fetch('/group/' + pilotSelection + '/user/' + userSelection, {
+    method: 'POST',
+    headers: {'Content-Type': 'multipart/form-data'},
+    body: JSON.stringify({"text": email.value})
+  });
+
+  if (response.status === 200) {
+    let data = await response.json();
+    d.querySelector("#user").value = data.name
+    d.querySelector("#password").value = data.password
+    d.querySelector("#userData").style.visibility = "visible";
+    d.querySelector("#enroll").disabled = "disabled";
+  }
+}
+
+async function lucky() {
+  let email = d.querySelector("#email");
+  if (!email.value) {
+    email.classList.add("is-invalid");
+    return;
+  }
+  let pilotSelection = d.querySelector("input[name ='pilotRadio']:checked").value
+  let response = await fetch('/group/' + pilotSelection + '/user', {
+    method: 'POST',
+    headers: {'Content-Type': 'multipart/form-data'},
+    body: JSON.stringify({"text": email.value})
+  });
+
+  if (response.status === 200) {
+    let data = await response.json();
+    d.querySelector("#user").value = data.name
+    d.querySelector("#password").value = data.password
+    d.querySelector("#userData").style.visibility = "visible";
+    users();
+    let user = d.querySelector("#user").value;
+    d.querySelector("#user" + user.substr(6)).checked = "checked";
+    d.querySelector("#pick").disabled = "disabled";
+    d.querySelector("#get").disabled = "disabled";
+    d.querySelector("#enroll").disabled = "disabled";
+  }
+}
+
+d.addEventListener("DOMContentLoaded", groups);
+    </script>
+  </body>
+</html>
