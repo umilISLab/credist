@@ -7,7 +7,7 @@ import hashlib
 from db import Group, User
 from db import Session
 
-from config import smtp_server as server, smtp_sender as sender
+from config import mail_host as server, mail_sender as sender
 
 body = """Subject: Your credentials for the VAST Annotation Tool
 
