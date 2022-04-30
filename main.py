@@ -86,6 +86,6 @@ def lucky(group_id: int):
 def static_files(filename="index.html"):
     return send_from_directory("static", filename)
 
-
+application = app
 if __name__ == "__main__":
     app.run(host, port, debug)

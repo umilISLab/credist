@@ -28,7 +28,7 @@ class User(Base):  # type: ignore
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     password = Column(String, nullable=False)
-    group_id = Column(String, ForeignKey("group.id"), nullable=False)
+    group_id = Column(Integer, ForeignKey("group.id"), nullable=False)
     date = Column(DateTime, default=None)
     owner = Column(String, default=None)
 

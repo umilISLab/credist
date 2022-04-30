@@ -9,8 +9,8 @@ db_host = "localhost"
 mail_host = "smtp.unimi.it"
 mail_sender = "vast@islab.di.unimi.it"
 
-debug = True
-# debug = False
+# debug = True
+debug = False
 
 # db_path = "db.sqlite"
 # db_url = f"sqlite:///{db_path}?check_same_thread=False"
