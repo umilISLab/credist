@@ -62,15 +62,19 @@ def users(group_id: int):
 #     return register(group_id, chosen.id)
 
 
-@app.route("/group/<int:group_id>/user/<int:user_id>", methods=["POST"])
-def register(group_id: int, user_id: int):
-    """mark user as taken and return password"""
-    email = request.get_json(force=True)["text"]
+def register(group_id: int, user_id: int, email: str):
     u = assign_user(group_id, user_id, email)
     if not u:
         abort(404, "Item not found")
     # return {"name": u.name, "password": u.password}
     return u
+
+
+@app.route("/group/<int:group_id>/user/<int:user_id>", methods=["POST"])
+def pick(group_id: int, user_id: int):
+    """mark user as taken and return password"""
+    email = request.get_json(force=True)["text"]
+    return register(group_id, user_id, email)
 
 
 @app.route("/group/<int:group_id>/user", methods=["POST"])
@@ -85,6 +89,10 @@ def lucky(group_id: int):
 @app.route("/<string:filename>")
 def static_files(filename="index.html"):
     return send_from_directory("static", filename)
+
+@app.route("/img/<string:filename>")
+def images(filename):
+    return send_from_directory("static/img", filename)
 
 application = app
 if __name__ == "__main__":
